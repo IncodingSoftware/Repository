@@ -1,0 +1,65 @@
+﻿@using Incoding.Extensions
+@using Incoding.MvcContrib
+@using Repository.Domain
+@model Repository.Domain.GetProductsQuery
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+@{
+    var containerId = Guid.NewGuid().ToString();
+}
+<div>
+    <div>
+        @(Html.When(JqueryBind.Click)
+              .Do()
+              .AjaxPost(Url.Action("Refresh","Home"))       
+              .OnSuccess(dsl => dsl.With(r=>r.Id(containerId)).Core().Trigger.Incoding())       
+              .AsHtmlAttributes()
+              .ToButton("Refresh"))
+    </div>
+    <div>
+        <label>Code</label>
+        @Html.TextBoxFor(r => r.Code)
+    </div>
+    <div>
+        <label>Price</label>
+        <label>From</label>
+        @Html.TextBoxFor(r => r.From)
+        <label>To</label>
+        @Html.TextBoxFor(r => r.To)
+    </div>
+    <div>
+        <label>Sort By</label>
+        @Html.DropDownListFor(r=>r.OrderBy,typeof(ProductOrder.OrderBy).ToSelectList())
+        <label>Desc</label>
+        @Html.CheckBoxFor(r=>r.Desc)
+    </div>
+    <div>
+        @(Html.When(JqueryBind.Click)
+              .Do()
+              .Direct()
+              .OnSuccess(dsl => dsl.With(r=>r.Id(containerId)).Core().Trigger.Incoding())
+              .AsHtmlAttributes()
+              .ToButton("Search"))
+    </div>
+</div>
+
+@(Html.When(JqueryBind.InitIncoding)
+      .Do()
+      .AjaxGet(Url.Dispatcher()
+                  .Query<GetProductsQuery>(new
+                                               {
+                                                       Code = Html.Selector().Name(r => r.Code),
+                                                       From = Html.Selector().Name(r => r.From),
+                                                       To = Html.Selector().Name(r => r.To),
+                                                       OrderBy = Html.Selector().Name(r => r.OrderBy),
+                                                       Desc = Html.Selector().Name(r=>r.Desc)                                                       
+                                               })
+                  .AsJson())
+      .OnSuccess(dsl =>
+                     {
+                         var urlTemplate = Url.Dispatcher().AsView("~/Views/Product/Search_Table_Tmpl.cshtml").ToAjaxGet();
+                         dsl.Self().Core().Insert.WithTemplate(urlTemplate).Html();
+                     })
+      .AsHtmlAttributes(new {id = containerId})
+      .ToDiv())

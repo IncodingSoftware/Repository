@@ -1,0 +1,37 @@
+﻿@using Incoding.MvcContrib
+@using Repository.Domain
+@{
+    using (var template = Html.Incoding().Template<GetProductsQuery.Response>())
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>Article</th>                   
+                    <th>Price</th>
+                    <th>Create Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @using (var each = template.ForEach())
+                {
+                    <tr>
+                        <td>
+                            @(Html.When(JqueryBind.Click)
+                                  .Do()
+                                  .AjaxPost(Url.Dispatcher().Push(new DeleteProductCommand
+                                                                      {
+                                                                              Id = each.For(r => r.Id)
+                                                                      }))
+                                  .OnSuccess(dsl => dsl.With(r => r.Self().Closest(HtmlTag.Tr)).Core().JQuery.Manipulation.Remove())
+                                  .AsHtmlAttributes()
+                                  .ToButton("Delete"))
+                        </td>
+                        <td>@each.For(r => r.Article)</td>
+                        <td>@each.For(r => r.Price)</td>
+                        <td>@each.For(r => r.CreateDt)</td>
+                    </tr>
+                }
+            </tbody>     
+        </table>
+    }
+}
