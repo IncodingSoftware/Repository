@@ -2,7 +2,9 @@ namespace Repository.UI.Controllers
 {
     #region << Using >>
 
+    using System.Linq;
     using System.Web.Mvc;
+    using Incoding.CQRS;
     using Incoding.MvcContrib;
     using Repository.Domain;
 
@@ -14,6 +16,9 @@ namespace Repository.UI.Controllers
 
         public ActionResult Index()
         {
+            if (!dispatcher.Query(new GetEntitiesQuery<Product>()).Any())
+                Refresh();
+
             return View();
         }
 

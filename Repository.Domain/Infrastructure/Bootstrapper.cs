@@ -2,7 +2,9 @@ namespace Repository.Domain
 {
     #region << Using >>
 
+    using System;
     using System.Configuration;
+    using System.IO;
     using System.Linq;
     using System.Web.Mvc;
     using FluentNHibernate.Cfg;
@@ -10,6 +12,7 @@ namespace Repository.Domain
     using FluentValidation;
     using FluentValidation.Mvc;
     using Incoding.Block.IoC;
+    using Incoding.Block.Logging;
     using Incoding.CQRS;
     using Incoding.Data;
     using Incoding.EventBroker;
@@ -21,10 +24,14 @@ namespace Repository.Domain
 
     public static class Bootstrapper
     {
-        #region Factory constructors
-
         public static void Start()
         {
+            LoggingFactory.Instance.Initialize(logging =>
+                                                   {
+                                                       string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Log");
+                                                       logging.WithPolicy(policy => policy.For(LogType.Debug).Use(FileLogger.WithAtOnceReplace(path, () => "Debug_{0}.txt".F(DateTime.Now.ToString("yyyyMMdd")))));
+                                                   });
+
             IoCFactory.Instance.Initialize(init => init.WithProvider(new StructureMapIoCProvider(registry =>
                                                                                                      {
                                                                                                          registry.For<IDispatcher>().Singleton().Use<DefaultDispatcher>();
@@ -59,8 +66,9 @@ namespace Repository.Domain
 
             foreach (var setUp in IoCFactory.Instance.ResolveAll<ISetUp>().OrderBy(r => r.GetOrder()))
                 setUp.Execute();
-        }
 
-        #endregion
+            var ajaxDef = JqueryAjaxOptions.Default;
+            ajaxDef.Cache = false; // disabled cache as default
+        }
     }
 }
